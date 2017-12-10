@@ -6,7 +6,7 @@ import org.scalatest.{Matchers, WordSpec}
 
 class AiLike extends WordSpec with Matchers {
   "Ai " should {
-    (1 until 5).foreach { round =>
+    (1 to 5).foreach { round =>
       s"be able to win against random in round $round" in {
         def heuristic(gameState: GameState) = gameState.getBestMoveWithMinimax(2)
 

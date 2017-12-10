@@ -71,12 +71,12 @@ case class GameState(board: Array[Array[Int]],
     def getNextStatesForPiece(coord: (Int, Int), index: Int, player1: Boolean): Seq[GameState] = {
       val (row, column) = coord
       val piece = board(row)(column)
-      val vicinity = (-1 to 1).map(i => row + i)
-        .flatMap(r => Try(board(r)).toOption.map(a => (r, a)))
-        .flatMap { case (rowIndex, rowDef) =>
-          (-1 to 1).map(i => column + i)
-            .flatMap(c => Try(rowDef(c)).toOption.map(_ => (rowIndex, c)))
+      val vicinity = List((0, 1), (0, -1), (1, 0), (-1, 0))
+        .flatMap { case (x, y) =>
+          val (toX, toY) = (row + x, column + y)
+          Try(board(toX)(toY)).toOption.map(_ => (toX, toY))
         }
+
 
       def move(to: (Int, Int)): Option[GameState] = {
         val (toRow, toColumn) = to
