@@ -27,9 +27,19 @@ class GameBoardLike extends WordSpec with Matchers {
       state.p1PiecesCoordinateCache.size shouldBe numOfPieces
       state.p2PiecesCoordinateCache.size shouldBe numOfPieces
     }
-    " should create a state that makes sense" in {
+    "should create a state that makes sense" in {
       val (p1, p2) = state.stateSummary
       p1 + p2 > 0 shouldBe true
+    }
+    "should be able to have available moves" in {
+      state.getNextStatesForPlayer1.size + state.getNextStatesForPlayer2.size > 0 shouldBe true
+    }
+    "should be able to transition to new states" in {
+      val initialBoard = Array(Array(1, 0), Array(0, 0))
+      val desiredBoard = Array(Array[Int](0, 0), Array[Int](0, 1))
+      val predefState = GameState(initialBoard)
+      predefState.move(1, (0, 0), (1, 1)).map(_.board).getOrElse(Array.empty) shouldBe desiredBoard
+      predefState.move(1, (1, 1), (1, 1)) shouldBe None
     }
   }
 

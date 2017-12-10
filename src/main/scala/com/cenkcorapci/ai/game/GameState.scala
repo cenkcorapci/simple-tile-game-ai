@@ -7,6 +7,8 @@ case class GameState(board: Array[Array[Int]],
                      p2PiecesCoordinateCache: Set[(Int, Int)] = Set.empty) {
   private lazy val base = 'a'.toInt
 
+  lazy val stateSummary: (Int, Int) = calculateStateSummary()
+
   def printState() =
     (("$" + (0 until board.head.length).map(i => s"  | ${i + 1}").mkString(""))
       +:
@@ -37,9 +39,55 @@ case class GameState(board: Array[Array[Int]],
   /**
     * Returns a tuple that shows (player ones available moves, player twos available moves)
     */
-  def stateSummary() = (playersAvailableMoveCount(p1PiecesCoordinateCache), playersAvailableMoveCount(p2PiecesCoordinateCache))
+  private def calculateStateSummary() = (playersAvailableMoveCount(p1PiecesCoordinateCache), playersAvailableMoveCount(p2PiecesCoordinateCache))
 
-  
+  def getNextStatesForPlayer1() = getAvailableNextStates(p1PiecesCoordinateCache)
+
+  def getNextStatesForPlayer2() = getAvailableNextStates(p2PiecesCoordinateCache)
+
+  def move(player: Int, from: (Int, Int), to: (Int, Int)) = {
+    val (row, column) = from
+    val (toRow, toColumn) = to
+    if (board(row)(column) == player && board(toRow)(toColumn) == 0) {
+      val newBoard = board.updated(toRow, board(toRow).updated(toColumn, board(row)(column)))
+        .updated(row, board(toRow).updated(column, 0))
+      Some(GameState.this.copy(board = newBoard))
+    } else None
+
+  }
+
+
+  private def getAvailableNextStates(pieceCoordSet: Set[(Int, Int)]): Seq[GameState] = {
+    /**
+      *
+      * @param coord
+      * @return right if there is a desired state
+      */
+    def getNextStatesForPiece(coord: (Int, Int)): Seq[GameState] = {
+      val (row, column) = coord
+      val piece = board(row)(column)
+      val vicinity = (-1 until 1).map(i => row + i)
+        .flatMap(r => Try(board(r)).toOption.map(a => (r, a)))
+        .flatMap { case (rowIndex, rowDef) =>
+          (-1 until 1).map(i => column + i)
+            .flatMap(c => Try(rowDef(c)).toOption.map(_ => (rowIndex, c)))
+        }
+
+      def find(to: (Int, Int)): Option[GameState] = {
+        val (toRow, toColumn) = to
+        if (board(toRow)(toColumn) == 0) {
+          val newBoard = board.updated(toRow, board(toRow).updated(toColumn, piece))
+            .updated(row, board(toRow).updated(column, 0))
+          Some(GameState.this.copy(board = newBoard))
+        } else None
+      }
+
+      vicinity.flatMap(find)
+    }
+
+    pieceCoordSet.toSeq.flatMap(getNextStatesForPiece)
+  }
+
 }
 
 object GameState {
