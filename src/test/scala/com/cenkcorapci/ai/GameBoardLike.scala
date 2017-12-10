@@ -7,11 +7,13 @@ class GameBoardLike extends WordSpec with Matchers {
   "Game State " should {
     val boardSize = 7
     val numOfPieces = 8
+
+    val state = GameState.createRandomState(boardSize, numOfPieces)
+
     "be able to be randomly generated" in {
-      val state = GameState.createRandomState(boardSize, numOfPieces)
-      state.printState()
       state.board.size shouldBe boardSize
       state.board.head.size shouldBe boardSize
+
       val pieces: (Int, Int) = state.board
         .flatten
         .foldLeft((0, 0))((acc, x) =>
@@ -19,7 +21,16 @@ class GameBoardLike extends WordSpec with Matchers {
           else if (x == 2) (acc._1, acc._2 + 1)
           else (acc._1, acc._2)
         )
+
       pieces shouldBe Tuple2(numOfPieces, numOfPieces)
+
+      state.p1PiecesCoordinateCache.size shouldBe numOfPieces
+      state.p2PiecesCoordinateCache.size shouldBe numOfPieces
+    }
+    " should create a state that makes sense" in {
+      val (p1, p2) = state.stateSummary
+      p1 + p2 > 0 shouldBe true
     }
   }
+
 }

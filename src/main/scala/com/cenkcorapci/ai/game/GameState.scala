@@ -1,8 +1,10 @@
 package com.cenkcorapci.ai.game
 
-import scala.util.Random
+import scala.util.{Random, Try}
 
-case class GameState(board: Array[Array[Int]]) {
+case class GameState(board: Array[Array[Int]],
+                     p1PiecesCoordinateCache: Set[(Int, Int)] = Set.empty,
+                     p2PiecesCoordinateCache: Set[(Int, Int)] = Set.empty) {
   private lazy val base = 'a'.toInt
 
   def printState() =
@@ -22,6 +24,22 @@ case class GameState(board: Array[Array[Int]]) {
 
       )
       .foreach(println)
+
+  def playersAvailableMoveCount(coordinateSet: Set[(Int, Int)]) = coordinateSet.flatMap {
+    case (row, column) =>
+      val rows = (-1 to 1).map(i => row + i)
+        .flatMap(r => Try(board(r)).toOption)
+
+      rows.flatMap(arr => (-1 to 1).map(i => column + i).flatMap(c => Try(arr(c)).toOption))
+  }
+    .count(_ == 0)
+
+  /**
+    * Returns a tuple that shows (player ones available moves, player twos available moves)
+    */
+  def stateSummary() = (playersAvailableMoveCount(p1PiecesCoordinateCache), playersAvailableMoveCount(p2PiecesCoordinateCache))
+
+  
 }
 
 object GameState {
@@ -39,6 +57,8 @@ object GameState {
     val (p1Pieces, p2Pieces) = generatePlaces().splitAt(numOfPiecesPerPlayer)
     val pieces = p1Pieces.map(x => (x, 1)).toMap ++ p2Pieces.map(x => (x, 2)).toMap
 
-    GameState(placeThem(pieces).grouped(size).toArray)
+    GameState(placeThem(pieces).grouped(size).toArray,
+      p1Pieces.map(x => (x / size, x % size)),
+      p2Pieces.map(x => (x / size, x % size)))
   }
 }
