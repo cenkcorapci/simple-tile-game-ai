@@ -1,4 +1,4 @@
-package com.cenkcorapci.ai.utils
+package com.cenkcorapci.tiles.utils
 
 object BoardConverters {
 

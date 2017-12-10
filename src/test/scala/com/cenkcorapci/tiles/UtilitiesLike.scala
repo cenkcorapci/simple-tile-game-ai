@@ -1,7 +1,7 @@
-package com.cenkcorapci.ai
+package com.cenkcorapci.tiles
 
+import com.cenkcorapci.tiles.utils.BoardConverters._
 import org.scalatest.{Matchers, WordSpec}
-import com.cenkcorapci.ai.utils.BoardConverters._
 
 class UtilitiesLike extends WordSpec with Matchers {
 

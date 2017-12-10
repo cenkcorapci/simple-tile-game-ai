@@ -6,4 +6,4 @@ simple-tile-game-ai
 - tile input
 - cli input for printing state, accepting moves
 - heuristic function for scoring moves
-- db actor for decision actor
+- db actor for decision tree

@@ -1,7 +1,7 @@
-package com.cenkcorapci.ai
+package com.cenkcorapci.tiles
 
+import com.cenkcorapci.tiles.game.GameState
 import org.scalatest.{Matchers, WordSpec}
-import com.cenkcorapci.ai.game.GameState
 
 class GameBoardLike extends WordSpec with Matchers {
   "Game State " should {

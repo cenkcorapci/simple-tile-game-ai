@@ -1,4 +1,4 @@
-package com.cenkcorapci.ai
+package com.cenkcorapci.tiles
 
 object Boot extends App {
 
