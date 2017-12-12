@@ -36,10 +36,10 @@ class GameBoardLike extends WordSpec with Matchers {
     }
     "should be able to transition to new states" in {
       val initialBoard = Array(Array(1, 0), Array(0, 0))
-      val desiredBoard = Array(Array[Int](0, 0), Array[Int](0, 1))
+      val desiredBoard = Array(Array[Int](0, 0), Array[Int](1, 0))
       val predefState = GameState(initialBoard)
-      predefState.move(1, (0, 0), (1, 1)).map(_.board).getOrElse(Array.empty) shouldBe desiredBoard
-      predefState.move(1, (1, 1), (1, 1)) shouldBe None
+      predefState.move(1, (0, 0), (1, 0)).map(_.board).getOrElse(Array.empty) shouldBe desiredBoard
+      predefState.move(1, (1, 1), (1, 0)) shouldBe None
     }
   }
 

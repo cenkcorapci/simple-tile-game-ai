@@ -10,9 +10,11 @@ class AiLike extends WordSpec with Matchers {
       s"be able to win against random in round $round" in {
         def heuristic(gameState: GameState) = gameState.getBestMoveWithMinimax(2)
 
-        def battleWithRandom(game: TileGameAgainstAi): Int =
-          game.doRandomMove match {
-            case Left(gameAgainstAi) => battleWithRandom(gameAgainstAi)
+        def battleWithRandom(game: TileGameAgainstAi, player1: Boolean = true): Int =
+          (if (player1) game.randomMove else game.counterWithAi) match {
+            case Left(gameAgainstAi) =>
+              gameAgainstAi.printGameSummary
+              battleWithRandom(gameAgainstAi, !player1)
             case Right(result) => result
           }
 

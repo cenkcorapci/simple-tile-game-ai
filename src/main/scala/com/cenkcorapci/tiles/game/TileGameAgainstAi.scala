@@ -3,30 +3,34 @@ package com.cenkcorapci.tiles.game
 import scala.util.Random
 
 case class TileGameAgainstAi(boardSetting: GameState, moveLimit: Int, heuristic: (GameState) => Option[GameState]) {
-  println(s"\n---Move left:$moveLimit ----")
-  println(s"${boardSetting.stateSummary}")
-  println(boardSetting.printState)
+
+  def printGameSummary() = {
+    println(s"\n---Move left:$moveLimit ----")
+    println(s"${boardSetting.stateSummary}")
+    println(boardSetting.printState)
+
+  }
 
   /**
     * Lets user to move, makes a counter move with ai if plausible
     *
     * @param from
     * @param to
+    * @throws Exception
     * @return either a new games state or result which means draw if 0, win for player 1 if 1, win for player 2 if 2
     */
-  def setMove(from: (Int, Int), to: (Int, Int)): Either[TileGameAgainstAi, Int] = {
-    if (moveLimit > 0) {
-      val player = boardSetting.move(2, from, to)
-      if (moveLimit > 1) player match {
-        case Some(move) => doCounterMove(move, moveLimit - 1)
-        case None => Right(1)
+  def move(from: (Int, Int), to: (Int, Int)): Either[TileGameAgainstAi, Int] = {
+    if (boardSetting.getNextStatesForPlayer2.isEmpty)
+      Right(1)
+    else if (moveLimit > 0)
+      boardSetting.move(2, from, to) match {
+        case Some(newState) => Left(TileGameAgainstAi(newState, moveLimit - 1, heuristic))
+        case None => throw new Exception("Invalid move")
       }
-      else Right(endGame)
-    }
     else Right(endGame)
   }
 
-  def doRandomMove(): Either[TileGameAgainstAi, Int] = {
+  def randomMove(): Either[TileGameAgainstAi, Int] = {
     if (moveLimit > 0) {
       val player = Random
         .shuffle(boardSetting
@@ -34,7 +38,7 @@ case class TileGameAgainstAi(boardSetting: GameState, moveLimit: Int, heuristic:
           .filterNot(_.board.sameElements(boardSetting.board)))
         .headOption
       if (moveLimit > 1) player match {
-        case Some(state) => doCounterMove(state, moveLimit - 1)
+        case Some(newState) => Left(TileGameAgainstAi(newState, moveLimit - 1, heuristic))
         case None => Right(1)
       }
       else Right(endGame)
@@ -42,9 +46,9 @@ case class TileGameAgainstAi(boardSetting: GameState, moveLimit: Int, heuristic:
     else Right(endGame)
   }
 
-  private def doCounterMove(newState: GameState, moveLeft: Int): Either[TileGameAgainstAi, Int] =
-    if (moveLeft > 0) heuristic(newState) match {
-      case Some(counterMove) => Left(TileGameAgainstAi(counterMove, moveLeft - 1, heuristic))
+  def counterWithAi(): Either[TileGameAgainstAi, Int] =
+    if (moveLimit > 0) heuristic(boardSetting) match {
+      case Some(counterMove) => Left(TileGameAgainstAi(counterMove, moveLimit - 1, heuristic))
       case None => Right(2)
     }
     else Right(endGame)

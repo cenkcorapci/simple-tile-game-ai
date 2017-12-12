@@ -8,11 +8,11 @@ class UtilitiesLike extends WordSpec with Matchers {
   "Tile converter" should {
 
     "convert tiles to coordinates" in {
-      "a1".tileToCoordinate shouldBe Left((0, 0))
+      "a1".tileToCoordinate shouldBe Some((0, 0))
     }
 
     "fail to convert random strings to coordinates" in {
-      "sdsad".tileToCoordinate shouldBe an[Right[(Int, Int), Throwable]]
+      "sdsad".tileToCoordinate shouldBe None
     }
 
   }

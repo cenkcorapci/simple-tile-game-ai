@@ -50,9 +50,11 @@ case class GameState(board: Array[Array[Int]],
   def move(player: Int, from: (Int, Int), to: (Int, Int)): Option[GameState] = {
     val (row, column) = from
     val (toRow, toColumn) = to
-    if (board(row)(column) == player && board(toRow)(toColumn) == 0) {
-      val newBoard = board.updated(toRow, board(toRow).updated(toColumn, board(row)(column)))
-        .updated(row, board(row).updated(column, 0))
+    if (Math.abs(column - toColumn) + Math.abs(row - toRow) > 1) // no diagonal moves are allowed
+      None
+    else if (board(row)(column) == player && board(toRow)(toColumn) == 0) {
+      val b = board.updated(toRow, board(toRow).updated(toColumn, player))
+      val newBoard = b.updated(row, b(row).updated(column, 0))
       Some(GameState.this.copy(board = newBoard))
         .map(s => if (player == 1) s.copy(p1PiecesCoordinateCache = s.p1PiecesCoordinateCache.filterNot(_ == from) ++ Seq(to))
         else if (player == 2) s.copy(p2PiecesCoordinateCache = s.p2PiecesCoordinateCache.filterNot(_ == from) ++ Seq(to))
