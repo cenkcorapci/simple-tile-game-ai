@@ -13,7 +13,6 @@ object Boot extends App {
   println("- Type help for commands")
   println("- Type quit for quitting the application")
 
-  def heuristic(gameState: GameState) = gameState.getBestMoveWithMinimax(2)
 
   def endGame(result: Int): Unit = {
     result match {
@@ -37,6 +36,7 @@ object Boot extends App {
         println("-\t You can set piece count with -p flag.Example; 'start -p:7' for 7 pieces")
         println("-\t You can set board size with -b flag.Example; 'start -b:6' for a 6x6 board")
         println("-\t You can set move limit with -m flag.Example; 'start -m:50' for a 50 moves")
+        println("-\t You can set difficulty with -d flag(Must be greater than 1).Example; 'start -d:5' for a search with 5 step depth")
         println("- Type 'to' between your coordinates to move.Example; typing 'a1 to a2' will your piece if it's on a1 and if a2 is available.")
         play(tileGameAgainstAi)
       case s if s.startsWith("start") =>
@@ -44,10 +44,14 @@ object Boot extends App {
           val boardSize = "-b:[0-9]+".r.findFirstMatchIn(s).flatMap(_.toString.split(":").lastOption).map(_.toInt).getOrElse(7)
           val pieceCount = "-p:[0-9]+".r.findFirstMatchIn(s).flatMap(_.toString.split(":").lastOption).map(_.toInt).getOrElse(6)
           val moveLimit = "-m:[0-9]+".r.findFirstMatchIn(s).flatMap(_.toString.split(":").lastOption).map(_.toInt).getOrElse(50)
+          val searchDepth = "-d:[0-9]+".r.findFirstMatchIn(s).flatMap(_.toString.split(":").lastOption).map(_.toInt).getOrElse(2)
           val newGame = GameState.createRandomState(boardSize, pieceCount)
           println(s"Move limit: $moveLimit")
           println("You are 'O'")
           newGame.printState
+
+          def heuristic(gameState: GameState) = gameState.getBestMoveWithMinimax(searchDepth)
+
           TileGameAgainstAi(newGame, moveLimit, heuristic)
         } match {
           case Success(g) => play(Option(g))
