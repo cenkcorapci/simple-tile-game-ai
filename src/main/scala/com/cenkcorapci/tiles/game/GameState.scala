@@ -9,6 +9,8 @@ case class GameState(board: Array[Array[Int]],
 
   lazy val stateSummary: (Int, Int) = calculateStateSummary()
 
+  lazy val stateScore: Int = stateSummary._1 - stateSummary._2
+
   def printState() =
     (("$" + (0 until board.head.length).map(i => s"  | ${i + 1}").mkString(""))
       +:
