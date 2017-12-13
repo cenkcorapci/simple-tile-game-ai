@@ -7,6 +7,13 @@ object Heuristics {
 
 
   implicit class BestByMinimax(state: GameState) {
+    /**
+      * Minimax without pruning, only works if ai is X
+      *
+      * @deprecated
+      * @param searchDepth
+      * @return
+      */
     def getBestMoveWithMinimax(searchDepth: Int): Option[GameState] = {
       def minimax(states: Seq[GameState], depth: Int = searchDepth, max: Boolean = true): Option[GameState] = {
         if (depth == 0) {
@@ -14,24 +21,31 @@ object Heuristics {
           else states.sortBy(_.stateScore).headOption
         }
         else {
-          if (max) states.map(_.getNextStatesForPlayer1)
+          if (max) states.map(_.getNextStatesForPlayerX)
             .flatMap(s => minimax(s, depth - 1, !max))
             .sortBy(-_.stateScore)
-          else states.map(_.getNextStatesForPlayer2)
+          else states.map(_.getNextStatesForPlayerO)
             .flatMap(s => minimax(s, depth - 1, !max))
             .sortBy(_.stateScore)
         }.filterNot(_.board.sameElements(state.board)).headOption
       }
 
-      minimax(state.getNextStatesForPlayer1)
+      minimax(state.getNextStatesForPlayerX)
     }
 
-    def getBestMoveWithMinimaxWithAlphaBetaPruning(searchDepth: Int): Option[GameState] =
-      state.getNextStatesForPlayer1
-        .map(s => (minimaxWithAlphaBetaPruning(s, searchDepth), s))
-        .sortBy(- _._1)
-        .headOption
-        .map(_._2)
+    def getBestMoveWithMinimaxWithAlphaBetaPruning(searchDepth: Int, isPlayerX: Boolean): Option[GameState] =
+      if (isPlayerX)
+        state.getNextStatesForPlayerX
+          .map(s => (minimaxWithAlphaBetaPruning(s, searchDepth, isPlayerX), s))
+          .sortBy(-_._1)
+          .headOption
+          .map(_._2)
+      else
+        state.getNextStatesForPlayerO
+          .map(s => (minimaxWithAlphaBetaPruning(s, searchDepth, isPlayerX), s))
+          .sortBy(-_._1)
+          .headOption
+          .map(_._2)
 
   }
 

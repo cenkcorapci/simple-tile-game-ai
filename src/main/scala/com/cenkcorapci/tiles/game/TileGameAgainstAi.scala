@@ -2,7 +2,7 @@ package com.cenkcorapci.tiles.game
 
 import scala.util.Random
 
-case class TileGameAgainstAi(boardSetting: GameState, moveLimit: Int, heuristic: (GameState) => Option[GameState]) {
+case class TileGameAgainstAi(boardSetting: GameState, moveLimit: Int, userIsX: Boolean = true, heuristic: (GameState) => Option[GameState]) {
 
   def printGameSummary() = {
     println(s"\n---Move left:$moveLimit ----")
@@ -20,11 +20,15 @@ case class TileGameAgainstAi(boardSetting: GameState, moveLimit: Int, heuristic:
     * @return either a new games state or result which means draw if 0, win for player 1 if 1, win for player 2 if 2
     */
   def move(from: (Int, Int), to: (Int, Int)): Either[TileGameAgainstAi, Int] = {
-    if (boardSetting.getNextStatesForPlayer2.isEmpty)
+    val movesAvailable = userIsX match {
+      case true => boardSetting.getNextStatesForPlayerX.isEmpty
+      case false => boardSetting.getNextStatesForPlayerO.isEmpty
+    }
+    if (movesAvailable)
       Right(1)
     else if (moveLimit > 0)
-      boardSetting.move(2, from, to) match {
-        case Some(newState) => Left(TileGameAgainstAi(newState, moveLimit - 1, heuristic))
+      boardSetting.move(if (userIsX) 1 else 2, from, to) match {
+        case Some(newState) => Left(TileGameAgainstAi(newState, moveLimit - 1, userIsX, heuristic))
         case None => throw new Exception("Invalid move")
       }
     else Right(endGame)
@@ -33,22 +37,31 @@ case class TileGameAgainstAi(boardSetting: GameState, moveLimit: Int, heuristic:
   def randomMove(): Either[TileGameAgainstAi, Int] = {
     if (moveLimit > 0) {
       val player = Random
-        .shuffle(boardSetting
-          .getNextStatesForPlayer2
-          .filterNot(_.board.sameElements(boardSetting.board)))
+        .shuffle(
+          if (userIsX) boardSetting.getNextStatesForPlayerX
+          else boardSetting.getNextStatesForPlayerO
+            .filterNot(_.board.sameElements(boardSetting.board)))
         .headOption
-      if (moveLimit > 1) player match {
-        case Some(newState) => Left(TileGameAgainstAi(newState, moveLimit - 1, heuristic))
+      val next = player.flatMap(_.commandFromPreviousState)
+        .flatMap { c =>
+          val r = boardSetting.move(if (userIsX) 1 else 2, c._1, c._2)
+          r
+        }
+
+      val dif = next.map(_.board.sameElements(boardSetting.board))
+      dif.foreach(println)
+
+      next match {
+        case Some(newState) => Left(TileGameAgainstAi(newState, moveLimit - 1, userIsX, heuristic))
         case None => Right(1)
       }
-      else Right(endGame)
     }
     else Right(endGame)
   }
 
   def counterWithAi(): Either[TileGameAgainstAi, Int] =
     if (moveLimit > 0) heuristic(boardSetting) match {
-      case Some(counterMove) => Left(TileGameAgainstAi(counterMove, moveLimit - 1, heuristic))
+      case Some(counterMove) => Left(TileGameAgainstAi(counterMove, moveLimit - 1, userIsX, heuristic))
       case None => Right(2)
     }
     else Right(endGame)

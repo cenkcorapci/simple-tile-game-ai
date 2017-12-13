@@ -45,14 +45,31 @@ object Boot extends App {
           val pieceCount = "-p:[0-9]+".r.findFirstMatchIn(s).flatMap(_.toString.split(":").lastOption).map(_.toInt).getOrElse(6)
           val moveLimit = "-m:[0-9]+".r.findFirstMatchIn(s).flatMap(_.toString.split(":").lastOption).map(_.toInt).getOrElse(50)
           val searchDepth = "-d:[0-9]+".r.findFirstMatchIn(s).flatMap(_.toString.split(":").lastOption).map(_.toInt).getOrElse(2)
-          val newGame = GameState.createRandomState(boardSize, pieceCount)
-          println(s"Move limit: $moveLimit")
-          println("You are 'O'")
-          newGame.printState
 
-          def heuristic(gameState: GameState) = gameState.getBestMoveWithMinimax(searchDepth)
 
-          TileGameAgainstAi(newGame, moveLimit, heuristic)
+          def pick(): TileGameAgainstAi = {
+            def startWithSide(userIsX: Boolean): TileGameAgainstAi = {
+              val newGame = GameState.createRandomState(boardSize, pieceCount)
+              newGame.printState
+              println(s"Move limit: $moveLimit")
+              def heuristic(gameState: GameState) = gameState.getBestMoveWithMinimax(searchDepth)
+
+              TileGameAgainstAi(newGame, moveLimit, userIsX, heuristic)
+            }
+
+            println("Pick a side(type x or o)")
+            val side = readLine
+            side.toLowerCase match {
+              case "x" => startWithSide(true)
+              case "o" => startWithSide(false)
+              case _ =>
+                println("Unknown side...")
+                pick
+            }
+          }
+
+
+          pick
         } match {
           case Success(g) => play(Option(g))
           case Failure(t) => println(s"Unknown command.${t.getMessage}")

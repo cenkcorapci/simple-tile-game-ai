@@ -3,8 +3,9 @@ package com.cenkcorapci.tiles.game
 import scala.util.{Random, Try}
 
 case class GameState(board: Array[Array[Int]],
-                     p1PiecesCoordinateCache: Seq[(Int, Int)] = Seq.empty,
-                     p2PiecesCoordinateCache: Seq[(Int, Int)] = Seq.empty) {
+                     xPiecesCoordinateCache: Seq[(Int, Int)] = Seq.empty,
+                     oPiecesCoordinateCache: Seq[(Int, Int)] = Seq.empty,
+                     commandFromPreviousState: Option[((Int, Int), (Int, Int))] = None) {
   private lazy val base = 'a'.toInt
 
   lazy val stateSummary: (Int, Int) = calculateStateSummary()
@@ -43,36 +44,38 @@ case class GameState(board: Array[Array[Int]],
   /**
     * Returns a tuple that shows (player ones available moves, player twos available moves)
     */
-  private def calculateStateSummary() = (playersAvailableMoveCount(p1PiecesCoordinateCache), playersAvailableMoveCount(p2PiecesCoordinateCache))
+  private def calculateStateSummary() = (playersAvailableMoveCount(xPiecesCoordinateCache), playersAvailableMoveCount(oPiecesCoordinateCache))
 
-  def getNextStatesForPlayer1() = getAvailableNextStates(true)
+  def getNextStatesForPlayerX() = getAvailableNextStates(true)
 
-  def getNextStatesForPlayer2() = getAvailableNextStates(false)
+  def getNextStatesForPlayerO() = getAvailableNextStates(false)
 
   def move(player: Int, from: (Int, Int), to: (Int, Int)): Option[GameState] = {
     val (row, column) = from
     val (toRow, toColumn) = to
+    val maybeCommand = Try((from, to)).toOption
+
     if (Math.abs(column - toColumn) + Math.abs(row - toRow) > 1) // no diagonal moves are allowed
       None
     else if (board(row)(column) == player && board(toRow)(toColumn) == 0) {
       val b = board.updated(toRow, board(toRow).updated(toColumn, player))
       val newBoard = b.updated(row, b(row).updated(column, 0))
       Some(GameState.this.copy(board = newBoard))
-        .map(s => if (player == 1) s.copy(p1PiecesCoordinateCache = s.p1PiecesCoordinateCache.filterNot(_ == from) ++ Seq(to))
-        else if (player == 2) s.copy(p2PiecesCoordinateCache = s.p2PiecesCoordinateCache.filterNot(_ == from) ++ Seq(to))
+        .map(s => if (player == 1) s.copy(xPiecesCoordinateCache = s.xPiecesCoordinateCache.filterNot(_ == from) ++ Seq(to))
+        else if (player == 2) s.copy(oPiecesCoordinateCache = s.oPiecesCoordinateCache.filterNot(_ == from) ++ Seq(to))
         else s)
+        .map(_.copy(commandFromPreviousState = maybeCommand))
     } else None
 
   }
 
 
-  private def getAvailableNextStates(isPlayer1: Boolean): Seq[GameState] = {
+  private def getAvailableNextStates(isPlayerX: Boolean): Seq[GameState] = {
     /**
-      *
       * @param coord
       * @return right if there is a desired state
       */
-    def getNextStatesForPiece(coord: (Int, Int), index: Int, player1: Boolean): Seq[GameState] = {
+    def getNextStatesForPiece(coord: (Int, Int), index: Int, playerX: Boolean): Seq[GameState] = {
       val (row, column) = coord
       val piece = board(row)(column)
       val vicinity = List((0, 1), (0, -1), (1, 0), (-1, 0))
@@ -91,11 +94,12 @@ case class GameState(board: Array[Array[Int]],
             val b = board.updated(toRow, board(toRow).updated(toColumn, piece))
             b.updated(row, b(row).updated(column, 0))
           }
-
+          val someCommand4It = Some(((row, column), (toRow, toColumn)))
           Some(GameState.this.copy(board = newBoard))
+            .map(_.copy(commandFromPreviousState = someCommand4It))
             .map(s =>
-              if (player1) s.copy(p1PiecesCoordinateCache = s.p1PiecesCoordinateCache.patch(index, Nil, 1) ++ Seq((toRow, toColumn)))
-              else s.copy(p2PiecesCoordinateCache = s.p2PiecesCoordinateCache.patch(index, Nil, 1) ++ Seq((toRow, toColumn)))
+              if (playerX) s.copy(xPiecesCoordinateCache = s.xPiecesCoordinateCache.patch(index, Nil, 1) ++ Seq((toRow, toColumn)))
+              else s.copy(oPiecesCoordinateCache = s.oPiecesCoordinateCache.patch(index, Nil, 1) ++ Seq((toRow, toColumn)))
             )
         } else None
       }
@@ -103,13 +107,13 @@ case class GameState(board: Array[Array[Int]],
       vicinity.flatMap(move)
     }
 
-    if (isPlayer1) p1PiecesCoordinateCache.zipWithIndex
+    if (isPlayerX) xPiecesCoordinateCache.zipWithIndex
       .flatMap {
-        case (coord, index) => getNextStatesForPiece(coord, index, isPlayer1)
+        case (coord, index) => getNextStatesForPiece(coord, index, isPlayerX)
       }
-    else p2PiecesCoordinateCache.zipWithIndex
+    else oPiecesCoordinateCache.zipWithIndex
       .flatMap {
-        case (coord, index) => getNextStatesForPiece(coord, index, isPlayer1)
+        case (coord, index) => getNextStatesForPiece(coord, index, isPlayerX)
       }
 
   }
