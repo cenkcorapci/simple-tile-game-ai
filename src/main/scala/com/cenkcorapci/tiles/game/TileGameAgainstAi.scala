@@ -2,9 +2,11 @@ package com.cenkcorapci.tiles.game
 
 import scala.util.Random
 
-case class TileGameAgainstAi(boardSetting: GameState, moveLimit: Int, heuristic: (GameState) => Option[GameState]) {
+case class TileGameAgainstAi(boardSetting: GameState,
+                             moveLimit: Int,
+                             heuristic: (GameState) => Option[GameState]) {
 
-  def printGameSummary() = {
+  def printGameSummary(): Unit = {
     println(s"\n---Move left:$moveLimit ----")
     println(s"${boardSetting.stateSummary}")
     println(boardSetting.printState)
@@ -24,37 +26,35 @@ case class TileGameAgainstAi(boardSetting: GameState, moveLimit: Int, heuristic:
       Right(1)
     else if (moveLimit > 0)
       boardSetting.move(2, from, to) match {
-        case Some(newState) => Left(TileGameAgainstAi(newState, moveLimit - 1, heuristic))
+        case Some(newState) =>
+          Left(TileGameAgainstAi(newState, moveLimit - 1, heuristic))
         case None => throw new Exception("Invalid move")
-      }
-    else Right(endGame)
+      } else Right(endGame)
   }
 
-  def randomMove(): Either[TileGameAgainstAi, Int] = {
+  def randomMove: Either[TileGameAgainstAi, Int] = {
     if (moveLimit > 0) {
       val player = Random
-        .shuffle(boardSetting
-          .getNextStatesForPlayer2
-          .filterNot(_.board.sameElements(boardSetting.board)))
+        .shuffle(
+          boardSetting.getNextStatesForPlayer2
+            .filterNot(_.board.sameElements(boardSetting.board)))
         .headOption
       if (moveLimit > 1) player match {
-        case Some(newState) => Left(TileGameAgainstAi(newState, moveLimit - 1, heuristic))
+        case Some(newState) =>
+          Left(TileGameAgainstAi(newState, moveLimit - 1, heuristic))
         case None => Right(1)
-      }
-      else Right(endGame)
-    }
-    else Right(endGame)
+      } else Right(endGame)
+    } else Right(endGame)
   }
 
-  def counterWithAi(): Either[TileGameAgainstAi, Int] =
+  def counterWithAi: Either[TileGameAgainstAi, Int] =
     if (moveLimit > 0) heuristic(boardSetting) match {
-      case Some(counterMove) => Left(TileGameAgainstAi(counterMove, moveLimit - 1, heuristic))
+      case Some(counterMove) =>
+        Left(TileGameAgainstAi(counterMove, moveLimit - 1, heuristic))
       case None => Right(2)
-    }
-    else Right(endGame)
+    } else Right(endGame)
 
-
-  private def endGame() = {
+  private def endGame: Int = {
     val (p1, p2) = boardSetting.stateSummary
     if (p1 > p2) 1
     else if (p1 < p2) 2

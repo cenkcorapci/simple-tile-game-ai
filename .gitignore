@@ -2,8 +2,7 @@
 .*
 # except for .gitignore and .travis_scripts
 !.gitignore
-!.editorconfig
-
+!.travis.yml
 *.log
 
 # sbt specific

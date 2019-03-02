@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/cenkcorapci/simple-tile-game-ai.svg?branch=master)](https://travis-ci.org/cenkcorapci/simple-tile-game-ai)
+[![Coverage Status](https://coveralls.io/repos/github/cenkcorapci/simple-tile-game-ai/badge.svg)](https://coveralls.io/github/cenkcorapci/simple-tile-game-ai)
+
 simple-tile-game-ai
 ===================
 Play a tile game against a minimax algorithm with alpha-beta pruning.
