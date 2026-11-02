@@ -1,24 +1,24 @@
 package com.cenkcorapci.tiles.utils
 
-import scala.util.Try
-
 object BoardConverters {
 
-  implicit class TileConverter(tile: String) {
-    private lazy val base = 'a'.toInt
+  private val Base = 'a'.toInt
+  private val TilePattern = "([a-zA-Z])([0-9]+)".r
 
+  implicit class TileConverter(tile: String) {
     def tileToCoordinate: Option[(Int, Int)] =
-      if (tile.length >= 2)
-        Try(
-          (tile.take(1).toLowerCase.head.toInt - base, tile.reverse.take(1).toInt - 1)).toOption
-      else None
+      tile.trim match {
+        case TilePattern(letter, number) =>
+          number.toIntOption
+            .filter(_ >= 1)
+            .map(n => (letter.head.toLower.toInt - Base, n - 1))
+        case _ => None
+      }
   }
 
   implicit class CoordinateConverter(coordinate: (Int, Int)) {
-    private lazy val base = 'a'.toInt
-
     def coordinateToTile: String =
-      s"${(base + coordinate._1).toChar}${coordinate._2 + 1}"
+      s"${(Base + coordinate._1).toChar}${coordinate._2 + 1}"
   }
 
 }

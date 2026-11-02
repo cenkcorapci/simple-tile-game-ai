@@ -1,160 +1,104 @@
 package com.cenkcorapci.tiles.game
 
-import scala.util.{Random, Try}
+import scala.util.Random
 
-case class GameState(board: Array[Array[Int]],
-                     p1PiecesCoordinateCache: Seq[(Int, Int)] = Seq.empty,
-                     p2PiecesCoordinateCache: Seq[(Int, Int)] = Seq.empty) {
-  private lazy val base = 'a'.toInt
+final case class GameState(board: Array[Array[Int]],
+                           p1PiecesCoordinateCache: Seq[(Int, Int)] = Seq.empty,
+                           p2PiecesCoordinateCache: Seq[(Int, Int)] = Seq.empty) {
 
-  lazy val stateSummary: (Int, Int) = calculateStateSummary
-
-  lazy val stateScore: Int = stateSummary._1 - stateSummary._2
-
-  def printState(): Unit =
-    (("$" + board.head.indices.map(i => s"  | ${i + 1}").mkString(""))
-      +:
-        board
-      .map(_.map {
-        case 1 => "X"
-        case 2 => "O"
-        case _ => " "
-      })
-      .zipWithIndex
-      .map {
-        case (arr, i) =>
-          (base + i).toChar +: arr.map(s => s" | $s")
-      }
-      .map(_.mkString(" "))
-      .map(row => s"${(0 until row.length).map(_ => "-").mkString("")}\n$row"))
-      .foreach(println)
-
-  def playersAvailableMoveCount(coordinateSeq: Seq[(Int, Int)]): Int =
-    coordinateSeq
-      .flatMap {
-        case (row, column) =>
-          val rows = (-1 to 1)
-            .map(i => row + i)
-            .flatMap(r => Try(board(r)).toOption)
-
-          rows.flatMap(arr =>
-            (-1 to 1).map(i => column + i).flatMap(c => Try(arr(c)).toOption))
-
-      }
-      .count(_ == 0)
-
-  /**
-    * Returns a tuple that shows (player ones available moves, player twos available moves)
-    */
-  private def calculateStateSummary: (Int, Int) =
+  lazy val stateSummary: (Int, Int) =
     (playersAvailableMoveCount(p1PiecesCoordinateCache),
      playersAvailableMoveCount(p2PiecesCoordinateCache))
 
-  def getNextStatesForPlayer1: Seq[GameState] = getAvailableNextStates(true)
+  lazy val stateScore: Int = stateSummary._1 - stateSummary._2
 
-  def getNextStatesForPlayer2: Seq[GameState] = getAvailableNextStates(false)
+  private def inBounds(row: Int, column: Int): Boolean =
+    row >= 0 && row < board.length && column >= 0 && column < board(row).length
 
+  def render: String = {
+    val header = "$" + board.indices.map(i => s"  | ${i + 1}").mkString
+    val rows = board.zipWithIndex.map {
+      case (cells, i) =>
+        val symbols = cells.map {
+          case 1 => "X"
+          case 2 => "O"
+          case _ => " "
+        }
+        ((GameState.Base + i).toChar.toString +: symbols.map(s => s" | $s")).mkString(" ")
+    }
+    (header +: rows.flatMap(row => Seq("-" * row.length, row))).mkString("\n")
+  }
+
+  def printState(): Unit = println(render)
+
+  /** Counts the empty cells in the 3x3 neighbourhood of each given piece. */
+  def playersAvailableMoveCount(coordinateSeq: Seq[(Int, Int)]): Int =
+    (for {
+      (row, column) <- coordinateSeq
+      r <- row - 1 to row + 1
+      c <- column - 1 to column + 1
+      if inBounds(r, c) && board(r)(c) == 0
+    } yield 1).sum
+
+  def getNextStatesForPlayer1: Seq[GameState] = nextStates(player = 1)
+
+  def getNextStatesForPlayer2: Seq[GameState] = nextStates(player = 2)
+
+  private def withPieces(player: Int,
+                         f: Seq[(Int, Int)] => Seq[(Int, Int)]): GameState =
+    player match {
+      case 1 => copy(p1PiecesCoordinateCache = f(p1PiecesCoordinateCache))
+      case 2 => copy(p2PiecesCoordinateCache = f(p2PiecesCoordinateCache))
+      case _ => this
+    }
+
+  /** Moves `player`'s piece one step orthogonally; None if the move is illegal. */
   def move(player: Int, from: (Int, Int), to: (Int, Int)): Option[GameState] = {
     val (row, column) = from
     val (toRow, toColumn) = to
-    if (Math.abs(column - toColumn) + Math.abs(row - toRow) > 1) // no diagonal moves are allowed
-      None
-    else if (board(row)(column) == player && board(toRow)(toColumn) == 0) {
-      val b = board.updated(toRow, board(toRow).updated(toColumn, player))
-      val newBoard = b.updated(row, b(row).updated(column, 0))
-      Some(GameState.this.copy(board = newBoard))
-        .map(
-          s =>
-            if (player == 1)
-              s.copy(p1PiecesCoordinateCache = s.p1PiecesCoordinateCache
-                .filterNot(_ == from) ++ Seq(to))
-            else if (player == 2)
-              s.copy(p2PiecesCoordinateCache = s.p2PiecesCoordinateCache
-                .filterNot(_ == from) ++ Seq(to))
-            else s)
+    val isStep = Math.abs(column - toColumn) + Math.abs(row - toRow) == 1
+
+    if (isStep && inBounds(row, column) && inBounds(toRow, toColumn) &&
+        board(row)(column) == player && board(toRow)(toColumn) == 0) {
+      val newBoard = board.updated(toRow, board(toRow).updated(toColumn, player))
+      val cleared = newBoard.updated(row, newBoard(row).updated(column, 0))
+      Some(
+        copy(board = cleared)
+          .withPieces(player, _.filterNot(_ == from) :+ to))
     } else None
-
   }
 
-  private def getAvailableNextStates(isPlayer1: Boolean): Seq[GameState] = {
-
-    /**
-      *
-      * @param coord
-      * @return right if there is a desired state
-      */
-    def getNextStatesForPiece(coord: (Int, Int),
-                              index: Int,
-                              player1: Boolean): Seq[GameState] = {
-      val (row, column) = coord
-      val piece = board(row)(column)
-      val vicinity = List((0, 1), (0, -1), (1, 0), (-1, 0))
-        .flatMap {
-          case (x, y) =>
-            val (toX, toY) = (row + x, column + y)
-            Try(board(toX)(toY)).toOption.map(_ => (toX, toY))
-        }
-
-      def move(to: (Int, Int)): Option[GameState] = {
-        val (toRow, toColumn) = to
-
-        if (board(toRow)(toColumn) == 0) {
-
-          val newBoard = {
-            val b = board.updated(toRow, board(toRow).updated(toColumn, piece))
-            b.updated(row, b(row).updated(column, 0))
-          }
-
-          Some(GameState.this.copy(board = newBoard))
-            .map(
-              s =>
-                if (player1)
-                  s.copy(p1PiecesCoordinateCache = s.p1PiecesCoordinateCache
-                    .patch(index, Nil, 1) ++ Seq((toRow, toColumn)))
-                else
-                  s.copy(p2PiecesCoordinateCache = s.p2PiecesCoordinateCache
-                    .patch(index, Nil, 1) ++ Seq((toRow, toColumn))))
-        } else None
-      }
-
-      vicinity.flatMap(move)
-    }
-
-    if (isPlayer1)
-      p1PiecesCoordinateCache.zipWithIndex
-        .flatMap {
-          case (coord, index) => getNextStatesForPiece(coord, index, isPlayer1)
-        } else
-      p2PiecesCoordinateCache.zipWithIndex
-        .flatMap {
-          case (coord, index) => getNextStatesForPiece(coord, index, isPlayer1)
-        }
-
+  private def nextStates(player: Int): Seq[GameState] = {
+    val pieces =
+      if (player == 1) p1PiecesCoordinateCache else p2PiecesCoordinateCache
+    for {
+      from @ (row, column) <- pieces
+      (dr, dc) <- GameState.Directions
+      state <- move(player, from, (row + dr, column + dc))
+    } yield state
   }
-
 }
 
 object GameState {
+  private val Base = 'a'.toInt
+  private val Directions = Seq((0, 1), (0, -1), (1, 0), (-1, 0))
+
   def createRandomState(size: Int, numOfPiecesPerPlayer: Int): GameState = {
-    val partitioner = size * size
+    require(size > 0, "Board size must be positive")
+    require(numOfPiecesPerPlayer > 0 && numOfPiecesPerPlayer * 2 <= size * size,
+            "Board is too small for that many pieces")
 
-    def generatePlaces(acc: Set[Int] = Set.empty): Set[Int] =
-      if (acc.size == numOfPiecesPerPlayer * 2) acc
-      else generatePlaces(acc ++ Set(Random.nextInt(partitioner)))
+    val (p1Places, p2Places) = Random
+      .shuffle((0 until size * size).toVector)
+      .take(numOfPiecesPerPlayer * 2)
+      .splitAt(numOfPiecesPerPlayer)
 
-    def placeThem(pieceSet: Map[Int, Int],
-                  index: Int = 0,
-                  array: Array[Int] = Array.empty): Array[Int] =
-      if (array.length == partitioner) array
-      else placeThem(pieceSet, index + 1, array :+ pieceSet.getOrElse(index, 0))
+    val owners = p1Places.map(_ -> 1).toMap ++ p2Places.map(_ -> 2).toMap
+    val board = Array.tabulate(size, size)((r, c) =>
+      owners.getOrElse(r * size + c, 0))
 
-    val (p1Pieces, p2Pieces) = generatePlaces().splitAt(numOfPiecesPerPlayer)
-    val pieces = p1Pieces.map(x => (x, 1)).toMap ++ p2Pieces
-      .map(x => (x, 2))
-      .toMap
+    def coordinates(places: Seq[Int]) = places.map(x => (x / size, x % size))
 
-    GameState(placeThem(pieces).grouped(size).toArray,
-              p1Pieces.map(x => (x / size, x % size)).toSeq,
-              p2Pieces.map(x => (x / size, x % size)).toSeq)
+    GameState(board, coordinates(p1Places), coordinates(p2Places))
   }
 }

@@ -4,12 +4,12 @@ import scala.util.Random
 
 case class TileGameAgainstAi(boardSetting: GameState,
                              moveLimit: Int,
-                             heuristic: (GameState) => Option[GameState]) {
+                             heuristic: GameState => Option[GameState]) {
 
   def printGameSummary(): Unit = {
     println(s"\n---Move left:$moveLimit ----")
     println(s"${boardSetting.stateSummary}")
-    println(boardSetting.printState)
+    boardSetting.printState()
 
   }
 

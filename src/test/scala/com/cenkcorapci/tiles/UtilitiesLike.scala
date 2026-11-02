@@ -1,9 +1,10 @@
 package com.cenkcorapci.tiles
 
 import com.cenkcorapci.tiles.utils.BoardConverters._
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class UtilitiesLike extends WordSpec with Matchers {
+class UtilitiesLike extends AnyWordSpec with Matchers {
 
   "Tile converter" should {
 

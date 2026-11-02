@@ -2,7 +2,7 @@ name := "simple-tile-game-ai"
 
 version := "1.0.0"
 
-scalaVersion := "2.12.8"
+scalaVersion := "2.13.16"
 
 scalacOptions := Seq(
   "-deprecation",
@@ -14,17 +14,15 @@ scalacOptions := Seq(
   "-unchecked",
   "-Xfatal-warnings",
   "-Xlint",
-  "-Yno-adapted-args",
-  "-Ywarn-dead-code",
-  "-Ywarn-numeric-widen",
-  "-Xfuture",
-  "-Ywarn-unused-import"
+  "-Wdead-code",
+  "-Wnumeric-widen",
+  "-Wunused:imports"
 )
 
 
 libraryDependencies ++= {
-  val scalaLoggingV = "3.9.2"
-  val scalaTestV = "3.0.6"
+  val scalaLoggingV = "3.9.5"
+  val scalaTestV = "3.2.19"
 
   Seq(
     "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingV,
