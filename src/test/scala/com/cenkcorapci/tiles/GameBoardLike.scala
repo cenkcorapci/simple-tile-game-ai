@@ -1,9 +1,10 @@
 package com.cenkcorapci.tiles
 
 import com.cenkcorapci.tiles.game.GameState
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class GameBoardLike extends WordSpec with Matchers {
+class GameBoardLike extends AnyWordSpec with Matchers {
   "Game State " should {
     val boardSize = 7
     val numOfPieces = 8

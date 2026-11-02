@@ -7,8 +7,8 @@ Play a tile game against a minimax algorithm with alpha-beta pruning.
 
 ## The game
 - There is a 7x7 board(Can be set to a custom size), a parametric turn limit and a parametrical number of pieces for each player. Initial
-position of these pieces must be random.On each turn current player makes a single move:Moving his piece to one of its four neighbours.
-which are either horizontal or vertical.
+position of these pieces is random. On each turn the current player makes a single move: moving a piece to one of its four
+neighbours, either horizontal or vertical.
 
 ```
 ---Move left:2 ----
@@ -76,6 +76,8 @@ g  |    |    |    |    |    |    |
 - When the turn limit is reached, the game ends and the player with more valid moveable space will be the
   winner.
 ## Usage
+Requires JDK 11+ and [sbt](https://www.scala-sbt.org/) 1.10+ (Scala 2.13).
+
 - Use `sbt run` to start.
 ```
 > sbt run 
@@ -90,6 +92,6 @@ g  |    |    |    |    |    |    |
 - Type quit for quitting the application
 
 ```
-- Other than that, this project has unit tests that covers a random 5 round play between a dummy player and ai.
+- Other than that, this project has unit tests that covers five randomly generated rounds of play between a dummy player and ai.
 Use `sbt clean coverage test coverageReport` to run tests with coverage.
-- use `sbt assembly` to assemble a fat jar.
+

@@ -4,7 +4,7 @@ import com.cenkcorapci.tiles.game.GameState
 
 object AlphaBetaPruning {
   def minimaxWithAlphaBetaPruning(state: GameState, maxDepth: Int): Int = {
-    minimize(state, maxDepth, Integer.MIN_VALUE, Integer.MAX_VALUE)
+    minimize(state, maxDepth, Int.MinValue, Int.MaxValue)
   }
 
   private def minimize(state: GameState,
@@ -19,7 +19,7 @@ object AlphaBetaPruning {
         if (nextStates.isEmpty) newBeta
         else {
           val b =
-            math.min(beta, maximize(nextStates.head, depth - 1, alpha, newBeta))
+            math.min(newBeta, maximize(nextStates.head, depth - 1, alpha, newBeta))
           if (alpha >= b) alpha
           else loop(nextStates.tail, b)
         }
